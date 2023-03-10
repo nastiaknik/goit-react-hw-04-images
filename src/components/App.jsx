@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ThreeDots } from 'react-loader-spinner';
@@ -9,161 +9,131 @@ import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
 import { Modal } from './Modal/Modal';
 
-export class App extends Component {
-  state = {
-    query: '',
-    page: 1,
-    images: [],
-    isLoading: false,
-    totalResults: 0,
-    showModal: false,
-    chosenImage: null,
-    error: null,
-  };
+export const App = () => {
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [totalResults, setTotalResults] = useState(0);
+  const [showModal, setShowModal] = useState(false);
+  const [chosenImage, setChosenImages] = useState(null);
+  const [error, setError] = useState(null);
 
-  componentDidUpdate(prevProps, prevState) {
-    const { query } = this.state;
-
-    if (prevState.query !== query) {
-      this.setState(({ isLoading }) => ({ isLoading: !isLoading }));
-      window.scrollTo({
-        behavior: 'smooth',
-        top: 0,
-      });
-
-      fetchPics(query)
-        .then(data => {
-          const results = data.hits.map(image => ({
-            id: image.id,
-            tag: image.tags,
-            smallImage: image.webformatURL,
-            largeImage: image.largeImageURL,
-          }));
-          if (data.totalHits !== 0) {
-            toast.success(
-              <p>
-                We found{' '}
-                <span style={{ color: '#2E8B57', fontWeight: 600 }}>
-                  {data.totalHits}
-                </span>{' '}
-                {data.totalHits === 1 ? 'image' : 'images'} for{' '}
-                <span style={{ color: '#2E8B57', fontWeight: 600 }}>
-                  {query}
-                </span>
-                !
-              </p>
-            );
-          }
-          if (!data.totalHits) {
-            toast.error(
-              <p>
-                There are no images for{' '}
-                <span style={{ color: '#e74c3c' }}>{query}</span>!
-              </p>
-            );
-          }
-          return this.setState({
-            page: 1,
-            images: results,
-            totalResults: data.totalHits,
-          });
-        })
-        .catch(error => this.setState({ error }))
-        .finally(() =>
-          this.setState(({ isLoading }) => ({ isLoading: !isLoading }))
-        );
+  useEffect(() => {
+    if (!query) {
+      return;
     }
 
-    if (prevState.page !== this.state.page && this.state.page !== 1) {
-      this.setState(({ isLoading }) => ({ isLoading: !isLoading }));
-      fetchPics(query, this.state.page)
-        .then(data => {
-          const results = data.hits.map(image => ({
-            id: image.id,
-            tag: image.tags,
-            smallImage: image.webformatURL,
-            largeImage: image.largeImageURL,
-          }));
+    setIsLoading(isLoading => !isLoading);
 
-          return this.setState(({ images }) => {
-            return {
-              images: [...images, ...results],
-            };
-          });
-        })
-        .catch(error => this.setState({ error }))
-        .finally(() =>
-          this.setState(({ isLoading }) => ({ isLoading: !isLoading }))
-        );
-    }
+    fetchPics(query, page)
+      .then(data => {
+        const results = data.hits.map(image => ({
+          id: image.id,
+          tag: image.tags,
+          smallImage: image.webformatURL,
+          largeImage: image.largeImageURL,
+        }));
 
+        setTotalResults(data.totalHits);
+
+        if (!data.totalHits) {
+          toast.error(
+            <p>
+              There are no images for{' '}
+              <span style={{ color: '#e74c3c' }}>{query}</span>!
+            </p>
+          );
+          return;
+        }
+
+        if (data.totalHits !== 0 && page === 1) {
+          setImages(results);
+          toast.success(
+            <p>
+              We found{' '}
+              <span style={{ color: '#2E8B57', fontWeight: 600 }}>
+                {data.totalHits}
+              </span>{' '}
+              {data.totalHits === 1 ? 'image' : 'images'} for{' '}
+              <span style={{ color: '#2E8B57', fontWeight: 600 }}>{query}</span>
+              !
+            </p>
+          );
+        } else {
+          setImages(prevState => [...prevState, ...results]);
+        }
+      })
+      .catch(error => {
+        setError(error);
+      })
+      .finally(() => setIsLoading(isLoading => !isLoading));
+  }, [query, page, error]);
+
+  useEffect(() => {
     if (
-      this.state.images.length === this.state.totalResults &&
-      this.state.images.length !== 0 &&
-      this.state.totalResults !== 0
+      images.length === totalResults &&
+      images.length > 0 &&
+      totalResults > 0
     ) {
       toast.info("You've reached the end of search results.", {
         toastId: 'customId',
       });
     }
-  }
+  }, [images, totalResults]);
 
-  searchSubmitHandler = query => {
-    this.setState({ query });
+  const onLoadMoreBtn = () => {
+    setPage(page => page + 1);
   };
 
-  onLoadMoreBtn = () => {
-    this.setState(({ page }) => ({ page: page + 1 }));
+  const toggleModal = () => {
+    setShowModal(showModal => !showModal);
   };
 
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({ showModal: !showModal }));
-  };
-
-  onImageClick = event => {
+  const onImageClick = event => {
     const url = event.target.dataset.large;
     const tag = event.target.alt;
-
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-      chosenImage: { url, tag },
-    }));
+    setChosenImages({ url, tag });
+    setShowModal(showModal => !showModal);
   };
 
-  render() {
-    const { images, totalResults, isLoading, showModal, chosenImage } =
-      this.state;
+  const handleSubmit = query => {
+    window.scrollTo({
+      behavior: 'smooth',
+      top: 0,
+    });
+    setQuery(query);
+    setPage(1);
+    setImages([]);
+  };
 
-    return (
-      <Layout>
-        <Searchbar onSubmit={this.searchSubmitHandler} />
+  return (
+    <Layout>
+      <Searchbar onSubmit={handleSubmit} />
 
-        {images && (
-          <ImageGallery images={images} openModal={this.onImageClick} />
-        )}
+      {images && <ImageGallery images={images} openModal={onImageClick} />}
 
-        {images.length < totalResults && (
-          <Button text="Load more..." onLoadMore={this.onLoadMoreBtn} />
-        )}
+      {isLoading && (
+        <ThreeDots
+          color="#303f9f"
+          wrapperStyle={{
+            margin: '0 auto',
+            display: 'flex',
+            justifyContent: 'center',
+          }}
+        />
+      )}
 
-        {isLoading && (
-          <ThreeDots
-            color="#303f9f"
-            wrapperStyle={{
-              margin: '0 auto',
-              display: 'flex',
-              justifyContent: 'center',
-            }}
-          />
-        )}
+      {images.length < totalResults && !isLoading && (
+        <Button text="Load more..." onLoadMore={onLoadMoreBtn} />
+      )}
 
-        {showModal && (
-          <Modal onClose={this.toggleModal}>
-            <img src={chosenImage.url} alt={chosenImage.tag} />
-          </Modal>
-        )}
-        <ToastContainer newestOnTop={true} autoClose={3000} />
-      </Layout>
-    );
-  }
-}
+      {showModal && (
+        <Modal onClose={toggleModal}>
+          <img src={chosenImage.url} alt={chosenImage.tag} />
+        </Modal>
+      )}
+      <ToastContainer newestOnTop={true} autoClose={3000} />
+    </Layout>
+  );
+};
