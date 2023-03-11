@@ -104,7 +104,6 @@ export const App = () => {
     });
     setQuery(query);
     setPage(1);
-    setImages([]);
   };
 
   return (
