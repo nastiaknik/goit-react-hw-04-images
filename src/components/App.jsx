@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { ThreeDots } from 'react-loader-spinner';
+/* import { ThreeDots } from 'react-loader-spinner'; */
 import { fetchPics } from './../utils/service-api';
 import { Layout } from './Layout/Layout';
 import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
 import { Modal } from './Modal/Modal';
+import { Loader } from './Loader/Loader';
 
 export const App = () => {
   const [query, setQuery] = useState('');
@@ -98,11 +99,11 @@ export const App = () => {
   };
 
   const handleSubmit = query => {
+    setQuery(query);
     window.scrollTo({
       behavior: 'smooth',
       top: 0,
     });
-    setQuery(query);
     setPage(1);
   };
 
@@ -110,9 +111,13 @@ export const App = () => {
     <Layout>
       <Searchbar onSubmit={handleSubmit} />
 
-      {images && <ImageGallery images={images} openModal={onImageClick} />}
+      {images.length ? (
+        <ImageGallery images={images} openModal={onImageClick} />
+      ) : null}
 
-      {isLoading && (
+      {isLoading && <Loader />}
+
+      {/* {isLoading && (
         <ThreeDots
           color="#303f9f"
           wrapperStyle={{
@@ -121,7 +126,7 @@ export const App = () => {
             justifyContent: 'center',
           }}
         />
-      )}
+      )} */}
 
       {images.length < totalResults && !isLoading && (
         <Button text="Load more..." onLoadMore={onLoadMoreBtn} />
