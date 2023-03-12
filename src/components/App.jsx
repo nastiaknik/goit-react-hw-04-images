@@ -69,7 +69,7 @@ export const App = () => {
         setError(error);
       })
       .finally(() => setIsLoading(isLoading => !isLoading));
-  }, [query, page]);
+  }, [query, page, error]);
 
   useEffect(() => {
     if (
