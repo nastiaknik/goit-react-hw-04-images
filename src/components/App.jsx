@@ -50,10 +50,6 @@ export const App = () => {
 
         if (page === 1) {
           setImages(results);
-          window.scrollTo({
-            behavior: 'smooth',
-            top: 0,
-          });
           toast.success(
             <p>
               We found{' '}
@@ -106,6 +102,10 @@ export const App = () => {
     if (string === query) {
       return;
     }
+    window.scrollTo({
+      behavior: 'smooth',
+      top: 0,
+    });
     setQuery(string);
     setPage(1);
     setImages([]);

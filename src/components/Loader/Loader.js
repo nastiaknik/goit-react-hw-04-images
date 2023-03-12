@@ -8,7 +8,7 @@ const Box = ({ children }) => {
   useEffect(() => {
     window.scrollTo({
       left: 0,
-      top: skeletonRef.current.offsetTop - 86,
+      top: skeletonRef.current.offsetTop - 88,
       behavior: 'smooth',
     });
   }, []);
