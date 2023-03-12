@@ -48,8 +48,12 @@ export const App = () => {
           return;
         }
 
-        if (data.totalHits !== 0 && page === 1) {
+        if (page === 1) {
           setImages(results);
+          window.scrollTo({
+            behavior: 'smooth',
+            top: 0,
+          });
           toast.success(
             <p>
               We found{' '}
@@ -69,7 +73,7 @@ export const App = () => {
         setError(error);
       })
       .finally(() => setIsLoading(isLoading => !isLoading));
-  }, [query, page, error]);
+  }, [query, page]);
 
   useEffect(() => {
     if (
@@ -98,13 +102,13 @@ export const App = () => {
     setShowModal(showModal => !showModal);
   };
 
-  const handleSubmit = query => {
-    setQuery(query);
-    window.scrollTo({
-      behavior: 'smooth',
-      top: 0,
-    });
+  const handleSubmit = string => {
+    if (string === query) {
+      return;
+    }
+    setQuery(string);
     setPage(1);
+    setImages([]);
   };
 
   return (
@@ -117,16 +121,7 @@ export const App = () => {
 
       {isLoading && <Loader />}
 
-      {/* {isLoading && (
-        <ThreeDots
-          color="#303f9f"
-          wrapperStyle={{
-            margin: '0 auto',
-            display: 'flex',
-            justifyContent: 'center',
-          }}
-        />
-      )} */}
+      {/* {isLoading && (<ThreeDots color="#303f9f" wrapperStyle={{ margin: '0 auto', display: 'flex', justifyContent: 'center', }} />)} */}
 
       {images.length < totalResults && !isLoading && (
         <Button text="Load more..." onLoadMore={onLoadMoreBtn} />
